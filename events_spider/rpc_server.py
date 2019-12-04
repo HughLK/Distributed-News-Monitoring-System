@@ -71,7 +71,8 @@ def crawl(body):
 def on_request(ch, method, props, body):
     if props.correlation_id == 'notify' and REDIS.get('master_ip') == APP_CONF['config']['localhost']:
         LOGGER.info("New Master Confirmed.")
-        CLIENT.call_crawl()
+        # CLIENT.call_crawl()
+        SCHEDULER.add_job(CLIENT.call_crawl, 'interval', id='crawl', minutes=10, next_run_time=datetime.datetime.now())
     elif props.correlation_id == 'crawl':
         LOGGER.info("Starting Crawling.")
         crawl(body)
@@ -157,8 +158,8 @@ channel.basic_qos(prefetch_count=1)
 channel.basic_consume(on_request, queue=queue_name, no_ack=True)
 
 register()
-# SCHEDULER.add_job(monitor, 'interval', id='monitor', minutes=10, next_run_time=datetime.datetime.now())
-# SCHEDULER.start()
-monitor()
+SCHEDULER.add_job(monitor, 'interval', id='monitor', minutes=10, next_run_time=datetime.datetime.now())
+SCHEDULER.start()
+# monitor()
 LOGGER.info("Awaiting RPC requests")
 channel.start_consuming()

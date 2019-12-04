@@ -5,7 +5,6 @@ import uuid
 import time
 import datetime
 import os
-from apscheduler.schedulers.blocking import BlockingScheduler
 from events_spider.utils.tools import LOGGER, APP_CONF, REDIS
 from events_spider.utils.MyDBUtils import MYSQL, SqlComment
 from redis_init import init_start_urls
@@ -61,11 +60,6 @@ class RpcClient(object):
                                     body=''
                                     )
 
-
-    def call_crawl_scheduel(self):
-        self.SCHEDULER.add_job(self.call_crawl, 'interval', id='crawl', minutes=APP_CONF['config']['crawl_frequency'], next_run_time=datetime.datetime.now())
-        self.SCHEDULER.start()
-
     def call_notify(self):
         self.channel.basic_publish(
                                     exchange='fanout_start_urls',
@@ -85,5 +79,3 @@ class RpcClient(object):
     
 if __name__ == '__main__':
    rpc = RpcClient()
-   # SCHEDULER.add_job(rpc.call, 'interval', minutes=APP_CONF['config']['crawl_frequency'], next_run_time=datetime.datetime.now())
-   # SCHEDULER.start()
