@@ -1,0 +1,41 @@
+{
+    "db": {
+        "driver": "mysql",
+        "host": "192.168.1.129",
+        "dbname": "pomp",
+        "pwd": "root", 
+        "user": "root", 
+        "port": 3306
+    },
+    "proxy": {
+        "url": "http://fanxin.v4.dailiyun.com/query.txt?key=NP8BDC2FF5&word=&rand=false&detail=false",
+        "count": 100,
+        "username": "fanxin",
+        "password": "fanxin123"
+    },
+    "es": {
+        "url": "192.168.1.129",
+        "port":9200
+    },
+    "mq": {
+        "url":"192.168.1.129",
+        "port":5672
+    },
+    "redis":{
+        "host":"192.168.1.129",
+        "port":6379
+    },
+    "config": {
+        "localhost": "192.168.1.128",
+        "backend": "192.168.1.129",
+        "url_filterd_path": "../tmp/news",
+        "spider_logs_path_all": "../log/scrapy.all",
+        "spider_logs_path_err": "../log/scrapy.err",
+        "word_dict_path": "events_spider/sentiment/model/train.vocab",
+        "model_path": "events_spider/sentiment/model/Senta",
+        "backend_logs_path_all": "../logs/backend.all",
+        "backend_logs_path_err": "../logs/backend.err",
+        "crawl_frequency": 60,
+        "enable_proxy": true
+    }
+}
