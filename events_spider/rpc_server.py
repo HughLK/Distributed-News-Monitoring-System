@@ -17,7 +17,8 @@ CLIENT = RpcClient()
 LOCK = RedisLock(REDIS)
 SPIDER_TYPES_MAPPING = {
     "weibo":"weibo",
-    "zhihu":"zhihu"
+    "zhihu":"zhihu",
+    "baidu":"baidu",
 }
 
 
@@ -55,15 +56,16 @@ def crawl(body):
     while len(REDIS.lrange("start_urls", 0, -1)):
         SPIDER_TYPES = "news"
         url = REDIS.lpop('start_urls')
+        LOGGER.info("URL: %s." % url)
         for k, v in SPIDER_TYPES_MAPPING.items():
             if k in url:
                 SPIDER_TYPES = v
                 break
 
-            LOGGER.info("Strat Crawling %s." % SPIDER_TYPES)
-            os.system('scrapy crawl %s -a start_url="%s"' % (SPIDER_TYPES, url))
-            LOGGER.info("Crawling %s Finish." % SPIDER_TYPES)
-            LOGGER.info("Awaiting RPC requests")
+        LOGGER.info("Strat Crawling %s." % SPIDER_TYPES)
+        os.system('scrapy crawl %s -a start_url="%s"' % (SPIDER_TYPES, url))
+        LOGGER.info("Crawling %s Finish." % SPIDER_TYPES)
+        LOGGER.info("Awaiting RPC requests")
 
 
 def on_request(ch, method, props, body):

@@ -2,14 +2,14 @@
 
 import re
 import scrapy
-from scrapy_redis.spiders import RedisSpider
+from scrapy.spiders import Spider
 import datetime
 import json
 from bs4 import BeautifulSoup
 from events_spider.items import NewsItems
 from events_spider.utils.tools import LOGGER
 
-class ZhihuSpider(RedisSpider):
+class ZhihuSpider(Spider):
     name = 'zhihu'
     
     handle_httpstatus_list = [301, 302]
@@ -20,12 +20,14 @@ class ZhihuSpider(RedisSpider):
         },
         'CONCURRENT_REQUESTS': 1,
     }
-    
-    redis_key = 'start_urls'
+
     allowed_domains = ["zhihu.com"]
 
     def __init__(self, *args, **kwargs):
         logger = LOGGER
+        super(ZhihuSpider, self).__init__(*args, **kwargs)
+        self.start_urls = [kwargs['start_url']]
+        # self.allowed_domains = [re.split(r'''www.''', urlsplit(kwargs['start_url'])[1])[-1]]
 
     def parse(self, response):
         item = NewsItems()
