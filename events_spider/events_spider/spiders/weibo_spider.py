@@ -16,7 +16,7 @@ class WeiboSpider(Spider):
         # 'JOBDIR': APP_CONF['config']['bbs_url_filterd_path'],
         'ITEM_PIPELINES': {
             'events_spider.pipelines.UpdatePipeline': 300,
-        }
+        },
     }
 
     allowed_domains = ["m.weibo.cn"]
@@ -28,31 +28,14 @@ class WeiboSpider(Spider):
         # self.allowed_domains = [re.split(r'''www.''', urlsplit(kwargs['start_url'])[1])[-1]]
 
     def parse(self, response):
-    	item = NewsItems()
         content = json.loads(response.body)
-        
         for card in content['data']['cards']:
             if card['card_type'] == 9:
-                item['comment_num'] = int(card['mblog']['comments_count'])
-                item['repost_num'] = int(card['mblog']['reposts_count'])
-                item['like_num'] = int(card['mblog']['attitudes_count'])
+                item = NewsItems()
+                item['comment_num'] = card['mblog']['comments_count']
+                item['repost_num'] = card['mblog']['reposts_count']
+                item['like_num'] = card['mblog']['attitudes_count']
                 item['media_sources'] = u'新浪微博'
-
-                # pub = card['mblog']['created_at']
-                # now = datetime.datetime.now()
-                # if u'分钟' in pub:
-                #     time = re.search(r'\d+', pub)
-                #     delta = datetime.timedelta(minutes=int(time.group()))
-                #     n_days = now - delta
-                #     item['pub_time'] = n_days.strftime('%Y-%m-%dT%H:%M:%S')
-                # elif u'小时' in pub:
-                #     time = re.search(r'\d+', pub)
-                #     delta = datetime.timedelta(hours=int(time.group()))
-                #     n_days = now - delta
-                #     item['pub_time'] = n_days.strftime('%Y-%m-%dT%H:%M:%S')
-                # else:
-                #     year = str(now.date())[:5]
-                #     item['pub_time'] = year+'pub'+'T00:00:00'
                 item['url'] = card['scheme']
                 yield scrapy.Request('https://m.weibo.cn/statuses/show?id='+card['mblog']['bid'], callback=self.parse_content, meta={'item':item}, dont_filter=True)
 
