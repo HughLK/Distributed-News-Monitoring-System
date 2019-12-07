@@ -47,29 +47,74 @@ news_mapping = {
 	}
 }
 
+news_reve_mapping = {
+	"mappings":{
+		"news_reve":{
+			"properties":{
+				"title":{
+					"type":"text",
+					"analyzer":"ik_max_word"				
+				},
+				"content":{
+					"type":"text",
+					"analyzer":"ik_max_word"				
+				},
+				"url":{
+					"type":"keyword"				
+				},
+				"pub_time":{
+					"type":"date"				
+				},
+				"media_sources":{
+					"type":"keyword"				
+				},
+				"like_num":{
+					"type":"integer"
+				},
+				"comment_num":{
+					"type":"integer"
+				},
+				"repost_num":{
+					"type":"integer"
+				},
+				"emotion":{
+					"type": "integer"
+				},
+				"hot":{
+					"type": "integer"
+				},
+				"revelance":{
+					"type": "keyword"
+				}
+			}
+		}
+	}
+}
+
 INDEX = "news"
 TYPE = "news_type"
+INDEX2 = "news_reve"
+TYPE2 = "news_reve_type"
 
 class ESOp(object):
-	"""docstring for ESOp"""
 	ACTIONS = []
 
 	def __init__(self):
-		super(ESOp, self).__init__()
 		self.es = Elasticsearch(hosts=APP_CONF["es"]["url"]+":"+str(APP_CONF["es"]["port"]))
 		self.init()
 	
 	def init(self):
 		if not self.es.indices.exists(index=INDEX):
 			status = self.es.indices.create(index=INDEX, body=news_mapping)
-    		# LOGGER.info(status)
+		if not self.es.indices.exists(index=INDEX2):
+			status = self.es.indices.create(index=INDEX2, body=news_reve_mapping)
 
-	def bulk(self, d, num=1):
+	def bulk(self, d, index, num=1):
 		if not len(d):
 			return
 		action = {
-			"_index":INDEX,
-			"_type":TYPE,
+			"_index":index,
+			"_type":index+'_type',
 			"_source":{
 				"title":d["title"],
 				"content":d["content"],
@@ -87,16 +132,17 @@ class ESOp(object):
 
 		self.ACTIONS.append(action)
 		if num > 0 and len(self.ACTIONS) == num:
-			success, _ = bulk(self.es, self.ACTIONS[:100], index=INDEX, raise_on_error=True)
+			success, _ = bulk(self.es, self.ACTIONS[:100], index=index, raise_on_error=True)
 			LOGGER.info('es bulk:'+str(success))
 			self.ACTIONS = self.ACTIONS[100:]
 		elif num < 0 and len(self.ACTIONS) > 0:
-			success, _ = bulk(self.es, self.ACTIONS, index=INDEX, raise_on_error=True)
+			success, _ = bulk(self.es, self.ACTIONS, index=index, raise_on_error=True)
 			LOGGER.info('es bulk:'+str(success))
 
-	def get_by_query(self, body):
-		re = self.es.search(index=INDEX, doc_type=TYPE, body=body)
+	def get_by_query(self, body, index):
+		re = self.es.search(index=index, doc_type=index+'_type', body=body)
 		return re['hits']['hits']
+
 ES = ESOp()
 # def process_item(item):
 # 	search_body = {
@@ -168,4 +214,4 @@ if __name__ == '__main__':
 	"emotion":1,
 	"hot":12,
 	"revelance":["http://rc","http://rb"]}
-	process_item(data)
+	# process_item(data)
