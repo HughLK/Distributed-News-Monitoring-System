@@ -2,13 +2,7 @@
 
 from utils.tools import APP_CONF
 
-ES_URL = APP_CONF['es']['url']
-
 BOT_NAME = 'events_spider'
-
-WEIBO_ACOUNT = [
-    ('15336171392', '7hxGP6l4')
-]
 
 SPIDER_MODULES = ['events_spider.spiders']
 NEWSPIDER_MODULE = 'events_spider.spiders'
@@ -27,9 +21,9 @@ DOWNLOADER_MIDDLEWARES = {
 }
 
 
-MYEXT_ENABLED = True
-# 一个单位5s
-MYEXT_ITEMCOUNT = 1   
+# MYEXT_ENABLED = True
+# # 一个单位5s
+# MYEXT_ITEMCOUNT = 1   
 # EXTENSIONS = {
 #    'events_spider.extensions_close.SpiderOpenCloseLogging': 540,
 # }
@@ -41,11 +35,13 @@ MYEXT_ITEMCOUNT = 1
 RANDOM_UA_TYPE = 'random'
 FEED_EXPORT_ENCODING = 'utf-8'
 DOWNLOAD_TIMEOUT = 5
-DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'
-SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+# DUPEFILTER_CLASS = 'scrapy_redis.dupefilter.RFPDupeFilter'
+DUPEFILTER_CLASS = 'events_spider.redis_dupefilter.RedisDupeFilter'
+# SCHEDULER = "scrapy_redis.scheduler.Scheduler"
 
 DEPTH_LIMIT = 5
 
 REDIS_HOST = '192.168.1.129' 
 REDIS_PORT = 6379
 # REDIS_START_URLS_KEY = 'start_urls:news'
+DUPEFILTER_KEY = 'url_fingerprints'
