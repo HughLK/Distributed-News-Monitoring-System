@@ -9,11 +9,9 @@ from events_spider.utils.tools import LOGGER, APP_CONF, REDIS
 from events_spider.utils.MyDBUtils import MYSQL, SqlComment
 from redis_init import init_start_urls
 
-# SCHEDULER = BlockingScheduler()
 
 class RpcClient(object):
     def __init__(self):
-        self.SCHEDULER = BlockingScheduler()
         self.credentials = pika.PlainCredentials('admin', 'admin')
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(
                                                                             host=APP_CONF['mq']['url'], 
@@ -69,7 +67,16 @@ class RpcClient(object):
                                     routing_key='',
                                     body=''
                                     )
-                                    
+                             
+    def call_elect(self):
+        self.channel.basic_publish(
+                                    exchange='fanout_start_urls',
+                                    properties=pika.BasicProperties(
+                                         correlation_id = 'elect',
+                                         ),
+                                    routing_key='',
+                                    body=APP_CONF['config']['localhost']
+                                    )       
 
     def check_master(self):
         master_ip = REDIS.get('master_ip')

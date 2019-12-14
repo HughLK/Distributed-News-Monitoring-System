@@ -25,6 +25,11 @@
         "host":"192.168.1.129",
         "port":6379
     },
+    "SPIDER_TYPES_MAPPING":{
+        "weibo":"weibo",
+        "zhihu":"zhihu",
+        "baidu":"baidu"
+    },
     "config": {
         "localhost": "192.168.1.128",
         "backend": "192.168.1.129",

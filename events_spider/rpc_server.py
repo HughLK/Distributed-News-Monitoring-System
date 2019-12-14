@@ -15,14 +15,14 @@ from rpc_client import RpcClient
 
 CLIENT = RpcClient()
 LOCK = RedisLock(REDIS)
+HAS_ELECTED = False
+REDIS_LOCK = RedisLock(REDIS)
 SPIDER_TYPES_MAPPING = {
     "weibo":"weibo",
     "zhihu":"zhihu",
     "baidu":"baidu",
 }
 
-
-REDIS_LOCK = RedisLock(REDIS)
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters(
                                                                 host=APP_CONF['mq']['url'], 
@@ -63,7 +63,7 @@ def crawl(body):
                 break
 
         LOGGER.info("Strat Crawling %s." % SPIDER_TYPES)
-        os.system('scrapy crawl %s -a start_url="%s"' % (SPIDER_TYPES, url))
+        # os.system('scrapy crawl %s -a start_url="%s"' % (SPIDER_TYPES, url))
         LOGGER.info("Crawling %s Finish." % SPIDER_TYPES)
         LOGGER.info("Awaiting RPC requests")
 
@@ -72,10 +72,13 @@ def on_request(ch, method, props, body):
     if props.correlation_id == 'notify' and REDIS.get('master_ip') == APP_CONF['config']['localhost']:
         LOGGER.info("New Master Confirmed.")
         # CLIENT.call_crawl()
-        SCHEDULER.add_job(CLIENT.call_crawl, 'interval', id='crawl', minutes=10, next_run_time=datetime.datetime.now())
+        if SCHEDULER.get_job('crawl') == None:
+            SCHEDULER.add_job(CLIENT.call_crawl, 'interval', id='crawl', minutes=10, next_run_time=datetime.datetime.now())
     elif props.correlation_id == 'crawl':
         LOGGER.info("Starting Crawling.")
         crawl(body)
+    elif props.correlation_id == 'elect' and body != APP_CONF['config']['localhost']:
+        elect()
 
 
 def register():
@@ -93,11 +96,21 @@ def register():
 
 
 def elect():
+    global HAS_ELECTED
+
+    if HAS_ELECTED:
+        LOGGER.info('Elect Already.')
+        return
+
+    # 通知其他node进行elect
+    CLIENT.call_elect()
+
     host = REDIS.get('master_ip')
     if host == APP_CONF['config']['localhost']:
         LOGGER.info("Ping "+host+' Success.')
         REDIS.lpush('spiders_vote', APP_CONF['config']['localhost']+':0')
-    if host != None:
+
+    elif host != None:
         # host = host[0]['ip']
         result = os.system('ping -c 2 '+ host)
         if result == 0:
@@ -143,6 +156,8 @@ def elect():
             REDIS.delete('spiders_vote')
             # LOCK.relese_lock()
         LOGGER.info('Electing News Master Finished.')
+
+    HAS_ELECTED = False
 
 def monitor():
     start_time = REDIS.get('start_crawl_time')
