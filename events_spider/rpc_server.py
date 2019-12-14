@@ -120,7 +120,7 @@ def elect():
             LOGGER.info("Ping "+host+' Failed.')
             REDIS.lpush('spiders_vote', APP_CONF['config']['localhost']+':1')
 
-        time.sleep(10)
+        time.sleep(60)
         votes = REDIS.lrange('spiders_vote', 0, -1)
         ips = []
         score = 0
@@ -139,7 +139,10 @@ def elect():
                 LOGGER.info('Electing master:'+master)
                 REDIS.set('master_ip', master)
                 # 通知new master
-                CLIENT.call_notify()
+                if REDIS.get('master_ip') != APP_CONF['localhost']:
+                	CLIENT.call_notify()
+                elif SCHEDULER.get_job('crawl') == None:
+	            	SCHEDULER.add_job(CLIENT.call_crawl, 'interval', id='crawl', minutes=10, next_run_time=datetime.datetime.now())
                 REDIS.delete('spiders_vote')
                 # LOCK.relese_lock()
         LOGGER.info('Electing News Master Finished.')
@@ -152,7 +155,11 @@ def elect():
             master = random.choice(ips)
             LOGGER.info('Electing master:'+master)
             REDIS.set('master_ip', master)
-            CLIENT.call_notify()
+            # 通知new master
+            if REDIS.get('master_ip') != APP_CONF['localhost']:
+            	CLIENT.call_notify()
+            elif SCHEDULER.get_job('crawl') == None:
+            	SCHEDULER.add_job(CLIENT.call_crawl, 'interval', id='crawl', minutes=10, next_run_time=datetime.datetime.now())
             REDIS.delete('spiders_vote')
             # LOCK.relese_lock()
         LOGGER.info('Electing News Master Finished.')
